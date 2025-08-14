@@ -1,0 +1,62 @@
+# Web Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# Database
+sqlalchemy==2.0.23
+alembic==1.12.1
+pymysql==1.1.0         
+cryptography==41.0.7   
+# mysqlclient==2.2.0
+
+# Authentication & Security
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+
+# HTTP & Requests
+httpx==0.25.2
+requests==2.31.0
+
+# File Upload & Cloud Storage
+cloudinary==1.36.0
+python-magic==0.4.27
+Pillow==10.1.0
+
+# Redis & Caching
+redis==5.0.1
+aioredis==2.0.1
+
+# Environment & Config
+python-dotenv==1.0.0
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# OAuth & Social Login
+authlib==1.2.1
+google-auth==2.24.0
+facebook-sdk==3.1.0
+
+# Background Tasks
+celery==5.3.4
+
+# Audio Processing
+mutagen==1.47.0  # Audio metadata
+pydub==0.25.1    # Audio manipulation
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+httpx==0.25.2  # For testing API
+
+# Utilities
+python-slugify==8.0.1
+pytz==2023.3
+pendulum==2.1.2
+
+# Development
+black==23.11.0
+flake8==6.1.0
+mypy==1.7.1
+pre-commit==3.6.0
