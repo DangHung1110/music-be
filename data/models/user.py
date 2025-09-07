@@ -13,6 +13,7 @@ class BaseMixin:
             result[c.name] = value
         return result
 
+
 class User(Base, BaseMixin):
     __tablename__ = "users"
 
