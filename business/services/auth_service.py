@@ -17,7 +17,8 @@ class AuthService:
         self.redis_service = RedisService()
         self.SECRET_KEY = os.getenv("JWT_SECRET", "your-fallback-secret-key")
         self.ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
-        self.ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+        self.ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN", "30"))
+        self.REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE", "7"))
         self.RESET_TOKEN_EXPIRE_MINUTES = int(os.getenv("RESET_TOKEN_EXPIRE_MINUTES", "60"))
 
     def hash_password(self, password: str) -> str:
@@ -33,6 +34,12 @@ class AuthService:
         to_encode = data.copy()
         expire = datetime.utcnow() + timedelta(minutes=self.ACCESS_TOKEN_EXPIRE_MINUTES)
         to_encode.update({"exp": expire, "iat": datetime.utcnow(), "type": "access"})
+        return jwt.encode(to_encode, self.SECRET_KEY, algorithm=self.ALGORITHM)
+
+    def create_refresh_token(self, data: Dict[str, Any]) -> str:
+        to_encode = data.copy()
+        expire = datetime.utcnow() + timedelta(days=self.REFRESH_TOKEN_EXPIRE_DAYS)
+        to_encode.update({"exp": expire, "iat": datetime.utcnow(), "type": "refresh"})
         return jwt.encode(to_encode, self.SECRET_KEY, algorithm=self.ALGORITHM)
 
     def create_reset_token(self, data: Dict[str, Any]) -> str:
@@ -85,9 +92,13 @@ class AuthService:
 
         token_payload = {"user_id": user.id, "email": user.email, "username": user.username, "role": user.role}
         access_token = self.create_access_token(token_payload)
+        refresh_token = self.create_refresh_token(token_payload)
 
         # Create Redis session
         session_id = await self.redis_service.create_session(user_dict, access_token)
+        
+        # Store refresh token
+        await self.redis_service.store_refresh_token(user.id, refresh_token)
         
         # Cache user data
         await self.redis_service.cache_user_data(user.id, user_dict)
@@ -98,9 +109,11 @@ class AuthService:
         return {
             "user": user_dict,
             "access_token": access_token,
+            "refresh_token": refresh_token,
             "session_id": session_id,
             "token_type": "bearer",
-            "expires_in": self.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+            "expires_in": self.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            "refresh_expires_in": self.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
         }
 
     async def login_user(self, db: AsyncSession, email: str, password: str) -> Dict[str, Any]:
@@ -122,9 +135,13 @@ class AuthService:
         user_dict = user.to_dict()
         token_payload = {"user_id": user.id, "email": user.email, "username": user.username, "role": user.role}
         access_token = self.create_access_token(token_payload)
+        refresh_token = self.create_refresh_token(token_payload)
 
         # Create Redis session
         session_id = await self.redis_service.create_session(user_dict, access_token)
+        
+        # Store refresh token
+        await self.redis_service.store_refresh_token(user.id, refresh_token)
         
         # Cache user data
         await self.redis_service.cache_user_data(user.id, user_dict)
@@ -135,14 +152,26 @@ class AuthService:
         return {
             "user": user_dict,
             "access_token": access_token,
+            "refresh_token": refresh_token,
             "session_id": session_id,
             "token_type": "bearer",
-            "expires_in": self.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+            "expires_in": self.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            "refresh_expires_in": self.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
         }
 
-    async def logout_user(self, token: str, session_id: str = None) -> Dict[str, Any]:
+    async def logout_user(self, token: str, session_id: str = None, refresh_token: str = None) -> Dict[str, Any]:
         # Blacklist the token
         await self.redis_service.blacklist_token(token)
+        
+        # Revoke refresh token if provided
+        if refresh_token:
+            try:
+                payload = self.verify_token(refresh_token, "refresh")
+                user_id = payload.get("user_id")
+                if user_id:
+                    await self.redis_service.revoke_refresh_token(user_id, refresh_token)
+            except:
+                pass  
         
         # Delete session if provided
         if session_id:
@@ -150,12 +179,49 @@ class AuthService:
         
         return {"message": "Logged out successfully"}
 
+    async def refresh_access_token(self, refresh_token: str) -> Dict[str, Any]:
+        try:
+            # Verify refresh token
+            payload = self.verify_token(refresh_token, "refresh")
+            user_id = payload.get("user_id")
+            
+            if not user_id:
+                raise AuthFailureError("Invalid refresh token")
+            
+            # Check if refresh token is still valid in Redis
+            if not await self.redis_service.is_refresh_token_valid(user_id, refresh_token):
+                raise AuthFailureError("Refresh token has been revoked")
+            
+            # Create new access token
+            token_payload = {
+                "user_id": payload.get("user_id"),
+                "email": payload.get("email"),
+                "username": payload.get("username"),
+                "role": payload.get("role")
+            }
+            
+            new_access_token = self.create_access_token(token_payload)
+            
+            return {
+                "access_token": new_access_token,
+                "token_type": "bearer",
+                "expires_in": self.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+            }
+            
+        except jwt.ExpiredSignatureError:
+            raise AuthFailureError("Refresh token has expired")
+        except jwt.JWTError:
+            raise AuthFailureError("Invalid refresh token")
+
     async def logout_all_devices(self, user_id: int, current_token: str) -> Dict[str, Any]:
         # Blacklist current token
         await self.redis_service.blacklist_token(current_token)
         
         # Delete all user sessions
         deleted_count = await self.redis_service.delete_all_user_sessions(user_id)
+        
+        # Revoke all refresh tokens for this user
+        await self.redis_service.revoke_all_refresh_tokens(user_id)
         
         # Invalidate user cache
         await self.redis_service.invalidate_user_cache(user_id)

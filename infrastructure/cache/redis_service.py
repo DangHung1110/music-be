@@ -11,6 +11,7 @@ class RedisService:
         self.token_blacklist_prefix = "blacklist:"
         self.user_sessions_prefix = "user_sessions:"
         self.login_attempts_prefix = "login_attempts:"
+        self.refresh_tokens_prefix = "refresh_tokens:"
         
     async def get_redis_client(self) -> redis.Redis:
         return await get_redis()
@@ -182,4 +183,43 @@ class RedisService:
         cache_key = f"user_cache:{user_id}"
         
         result = await redis_client.delete(cache_key)
+        return result > 0
+    
+    # Refresh token management
+    async def store_refresh_token(self, user_id: int, refresh_token: str, expire_seconds: int = None) -> bool:
+        redis_client = await self.get_redis_client()
+        refresh_key = f"{self.refresh_tokens_prefix}{user_id}"
+        
+        # Set expiry to 7 days by default
+        expire_time = expire_seconds or (7 * 24 * 60 * 60)
+        
+        # Store the refresh token in a set for this user
+        await redis_client.sadd(refresh_key, refresh_token)
+        await redis_client.expire(refresh_key, expire_time)
+        
+        return True
+    
+    async def is_refresh_token_valid(self, user_id: int, refresh_token: str) -> bool:
+
+        redis_client = await self.get_redis_client()
+        refresh_key = f"{self.refresh_tokens_prefix}{user_id}"
+        
+        # Check if the refresh token exists in the user's set
+        result = await redis_client.sismember(refresh_key, refresh_token)
+        return result
+    
+    async def revoke_refresh_token(self, user_id: int, refresh_token: str) -> bool:
+       
+        redis_client = await self.get_redis_client()
+        refresh_key = f"{self.refresh_tokens_prefix}{user_id}"
+        
+        result = await redis_client.srem(refresh_key, refresh_token)
+        return result > 0
+    
+    async def revoke_all_refresh_tokens(self, user_id: int) -> bool:
+   
+        redis_client = await self.get_redis_client()
+        refresh_key = f"{self.refresh_tokens_prefix}{user_id}"
+        
+        result = await redis_client.delete(refresh_key)
         return result > 0
