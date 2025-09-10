@@ -1,9 +1,13 @@
 from data.repositories.playlist_repository import  PlaylistRespository
 class PlayListService:
-    def __init__(self):
-        self.repo=PlaylistRespository()
-    async def search_playlist(self,query:str):
-        playlists=await self.repo.search_playlists(query)
+    def __init__(self, db):
+        self.repo = PlaylistRespository(db)
+    async def search_playlist_local(self, query: str):
+        playlists = await self.repo.search_playlists_local(query)
+        return playlists
+    async def search_playlist_jamendo(self,query:str):
+        playlists = await self.repo.search_playlist_jamendo(query)
+
         results=[]
         for playlist in playlists.get("results",[]):
             tracks=[]
@@ -28,9 +32,16 @@ class PlayListService:
 
             })
         return results
+    async def search_playlists_all(self, query: str):
+        local = await self.search_playlist_local(query)
+        jamendo = await self.search_playlist_jamendo(query)
+        return local + jamendo
     async def create_playlist(self,title:str,owner_id:int,description:str,source:str):
         playlist=await self.repo.create_playlist(title,owner_id,description,source)
         return playlist
-        
+    async def save_music_to_playlist(self, playlist_id: int, owner_id: int, song_data: dict):
+        result = await self.repo.save_music_to_playlist(playlist_id, owner_id, song_data)
+        return result
+
 
            

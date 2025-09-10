@@ -21,4 +21,4 @@ class Playlist(Base):
     source = Column(String(20), default="local", nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    songs = relationship("Song", secondary=playlist_song_table, backref="playlists")
+    songs = relationship("Song", secondary=playlist_song_table, backref="playlists", lazy="selectin")

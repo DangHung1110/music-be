@@ -9,15 +9,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 router=APIRouter(prefix="/Playlist",tags=["Playlist"])
 @router.get("/search")
 @async_handler
-async def search_music(query: str = Query(..., description="Search keyword for tracks"),):
-    playlist_service=PlayListService()
-    results=await playlist_service.search_playlist(query)
+async def search_music(query: str = Query(..., description="Search keyword for tracks"),db: Annotated[AsyncSession, Depends(get_db)] = None):
+    playlist_service=PlayListService(db)
+    results = await playlist_service.search_playlists_all(query)
+
     return OK(message="Tracks fetched successfully",metadata={"playlists":results}).send()
 @router.post("/create")
 @async_handler
 async def create_playlist(
      db: Annotated[AsyncSession, Depends(get_db)],
-     current_user:dict=Depends(get_current_user),
+     current_user: dict = Depends(get_current_user),
     title: str = Body(...),
     description: str = Body(...),
     source: str = Body(...),
@@ -26,3 +27,20 @@ async def create_playlist(
     playlist_service = PlayListService(db)
     result = await playlist_service.create_playlist(title, owner_id, description, source)
     return OK(message="Playlist created successfully", metadata={"playlist": result}).send()
+@router.post("/savetoplaylist")
+@async_handler 
+async def save_music_to_playlist( 
+    data: Annotated[dict, Body(...)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: dict = Depends(get_current_user),
+):
+    playlist_id = data["playlist_id"]
+    song_data = data["song_data"]
+
+    owner_id = current_user["user_id"]
+    playlist_service = PlayListService(db)
+    result = await playlist_service.save_music_to_playlist(playlist_id, owner_id, song_data)
+    return OK(
+        message="Save music to playlist successfully",
+        metadata={"SaveMusic": result}
+    ).send()
