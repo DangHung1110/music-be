@@ -44,3 +44,19 @@ async def save_music_to_playlist(
         message="Save music to playlist successfully",
         metadata={"SaveMusic": result}
     ).send()
+@router.delete("/remove")
+@async_handler
+async def remove_song_from_playlist(
+    db: Annotated[AsyncSession, Depends(get_db)],  
+    current_user: dict = Depends(get_current_user), 
+    song_id: int=Query(...), 
+    playlist_id: int = Query(...),
+):
+    owner_id = current_user["user_id"]
+    playlist_service = PlayListService(db)
+    result = await playlist_service.remove_song(playlist_id, song_id, owner_id)
+
+    return OK(
+        message="Song removed from playlist successfully",
+        metadata={"Removed": result}
+    ).send()

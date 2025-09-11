@@ -42,6 +42,8 @@ class PlayListService:
     async def save_music_to_playlist(self, playlist_id: int, owner_id: int, song_data: dict):
         result = await self.repo.save_music_to_playlist(playlist_id, owner_id, song_data)
         return result
+    async def remove_song(self, playlist_id: int, song_id: int, owner_id: int):
+        return await self.repo.remove_song_from_playlist(playlist_id, song_id, owner_id)
 
 
            
