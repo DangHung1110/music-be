@@ -84,7 +84,6 @@ class AuthService:
             "password": hashed_password,
             "full_name": full_name,
             "role": "user",
-            "is_active": True
         }
 
         user = await user_repo.create(user_data)

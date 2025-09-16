@@ -18,7 +18,7 @@ class Playlist(Base):
     title = Column(String(100), nullable=False)
     description = Column(String(255), nullable=True)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-
+    source = Column(String(20), default="local", nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    songs = relationship("Song", secondary=playlist_song_table, backref="playlists")
+    songs = relationship("Song", secondary=playlist_song_table, backref="playlists", lazy="selectin")
