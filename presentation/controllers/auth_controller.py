@@ -1,8 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, Header, Response, Cookie
+from fastapi import APIRouter, Depends, HTTPException, Header, Response, Cookie, Query
+from fastapi.responses import RedirectResponse
 from shared.decorators import async_handler
 from shared.responses import OK, CREATED
 from shared.exceptions import AuthFailureError
 from business.services.auth_service import AuthService
+from business.services.oauth_service import OAuthService
 from presentation.validator.auth_validator import RegisterRequest, LoginRequest, ForgotPasswordRequest, ResetPasswordRequest
 from presentation.middleware.auth_middleware import get_current_user
 from datetime import datetime
@@ -12,6 +14,7 @@ import os
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 auth_service = AuthService()
+oauth_service = OAuthService()
 
 @router.post("/register")
 @async_handler
@@ -115,3 +118,56 @@ async def reset_password(request: ResetPasswordRequest, db: AsyncSession = Depen
         new_password=request.new_password
     )
     return OK(message="Password reset successfully", metadata=result).send()
+
+# OAuth endpoints
+@router.get("/google")
+@async_handler
+async def google_auth():
+    auth_url = oauth_service.get_google_auth_url()
+    return OK(message="Redirect to Google OAuth", metadata={"auth_url": auth_url}).send()
+
+@router.get("/facebook")
+@async_handler
+async def facebook_auth():
+    auth_url = oauth_service.get_facebook_auth_url()
+    return OK(message="Redirect to Facebook OAuth", metadata={"auth_url": auth_url}).send()
+
+@router.get("/google/callback")
+async def google_callback(code: str = Query(...), db: AsyncSession = Depends(get_db)):
+    try:
+        # Exchange code for user info
+        oauth_data = await oauth_service.exchange_google_code(code)
+        
+        # Handle login/registration
+        result = await oauth_service.handle_oauth_login(db, oauth_data)
+        
+        # Build frontend redirect URL
+        redirect_url = oauth_service.build_frontend_redirect_url(result)
+        
+        # Redirect to frontend with tokens
+        return RedirectResponse(url=redirect_url)
+        
+    except Exception as e:
+        error_message = str(e)
+        redirect_url = oauth_service.build_frontend_redirect_url({}, error_message)
+        return RedirectResponse(url=redirect_url)
+
+@router.get("/facebook/callback")
+async def facebook_callback(code: str = Query(...), db: AsyncSession = Depends(get_db)):
+    try:
+        # Exchange code for user info
+        oauth_data = await oauth_service.exchange_facebook_code(code)
+        
+        # Handle login/registration
+        result = await oauth_service.handle_oauth_login(db, oauth_data)
+        
+        # Build frontend redirect URL
+        redirect_url = oauth_service.build_frontend_redirect_url(result)
+        
+        # Redirect to frontend with tokens
+        return RedirectResponse(url=redirect_url)
+        
+    except Exception as e:
+        error_message = str(e)
+        redirect_url = oauth_service.build_frontend_redirect_url({}, error_message)
+        return RedirectResponse(url=redirect_url)
