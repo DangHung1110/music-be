@@ -7,13 +7,26 @@ from business.services.playlists_service import PlayListService
 from infrastructure.config.database import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
 router=APIRouter(prefix="/Playlist",tags=["Playlist"])
-@router.get("/search")
+"""@router.get("/search")
 @async_handler
 async def search_music(query: str = Query(..., description="Search keyword for tracks"),db: Annotated[AsyncSession, Depends(get_db)] = None):
     playlist_service=PlayListService(db)
     results = await playlist_service.search_playlists_all(query)
 
-    return OK(message="Tracks fetched successfully",metadata={"playlists":results}).send()
+    return OK(message="Tracks fetched successfully",metadata={"playlists":results}).send()"""
+@router.get("/my-playlists")
+@async_handler
+async def get_my_playlists(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: dict = Depends(get_current_user)
+):
+    owner_id = current_user["user_id"]
+    playlist_service = PlayListService(db)
+    playlists = await playlist_service.get_playlists_by_owner(owner_id)
+    return OK(
+        message="Fetched playlists successfully",
+        metadata={"playlists": playlists}
+    ).send()
 @router.post("/create")
 @async_handler
 async def create_playlist(
@@ -59,4 +72,33 @@ async def remove_song_from_playlist(
     return OK(
         message="Song removed from playlist successfully",
         metadata={"Removed": result}
+    ).send()
+@router.delete("/delete")
+@async_handler
+async def delete_playlist(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: dict = Depends(get_current_user),
+    playlist_id: int = Query(..., description="ID of playlist to delete")
+):
+    owner_id = current_user["user_id"]
+    playlist_service = PlayListService(db)
+    result = await playlist_service.delete_playlist(playlist_id, owner_id)
+
+    return OK(
+        message="Playlist deleted successfully",
+        metadata={"Deleted": result}
+    ).send()
+@router.get("/{playlist_id}/songs")
+@async_handler
+async def get_songs_in_playlist(
+    playlist_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: dict = Depends(get_current_user)
+):
+    owner_id = current_user["user_id"]
+    playlist_service = PlayListService(db)
+    songs = await playlist_service.get_songs_in_playlist(playlist_id, owner_id)
+    return OK(
+        message="Fetched songs successfully",
+        metadata={"songs": songs}
     ).send()
