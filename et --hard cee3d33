@@ -1,0 +1,15 @@
+[33m2c0ab4e[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdhung[m[33m, [m[1;31morigin/dhung[m[33m)[m HEAD@{0}: reset: moving to origin/dhung
+[33m7faaf9f[m HEAD@{1}: pull origin Vinahouse: Merge made by the 'ort' strategy.
+[33mcee3d33[m HEAD@{2}: commit: fix auth
+[33m2c0ab4e[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdhung[m[33m, [m[1;31morigin/dhung[m[33m)[m HEAD@{3}: commit: fix redis in docker
+[33m474f499[m HEAD@{4}: commit: use redis for auth
+[33m9dde669[m HEAD@{5}: commit (merge): merge
+[33mc18a9c2[m HEAD@{6}: commit: commit before merge
+[33m7a0b889[m HEAD@{7}: pull origin Vinahouse: Merge made by the 'ort' strategy.
+[33m0605874[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m HEAD@{8}: checkout: moving from main to dhung
+[33m0605874[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m HEAD@{9}: commit: fix auth
+[33m4a886ce[m HEAD@{10}: commit: run auth successfully
+[33m261827f[m HEAD@{11}: commit: auth
+[33md991504[m HEAD@{12}: commit: repository user
+[33m9f812aa[m HEAD@{13}: Branch: renamed refs/heads/master to refs/heads/main
+[33m9f812aa[m HEAD@{15}: commit (initial): middleware and validators
