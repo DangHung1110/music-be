@@ -6,13 +6,7 @@ class MusicService:
         self.repo = MusicRespository()
 
     async def smart_search(self, query: str):
-        """
-        Logic tìm nhạc:
-        1️⃣ Gọi API tìm theo bài hát
-        2️⃣ Nếu không có kết quả → chuyển sang tìm theo nghệ sĩ
-        """
 
-        # 1️⃣ Tìm theo bài hát trước
         tracks_json = await self.repo.search_tracks(query)
         tracks = self._format_results_tracks(tracks_json)
 
@@ -22,7 +16,6 @@ class MusicService:
                 "tracks": tracks
             }
 
-        # 2️⃣ Không có kết quả → tìm theo nghệ sĩ
         artist_json = await self.repo.search_by_artist(query)
         artist_data = self._format_results_artist(artist_json)
 
@@ -32,7 +25,6 @@ class MusicService:
         }
 
     def _format_results_tracks(self, tracks_json):
-        """✅ Hàm xử lý dữ liệu bài hát từ API"""
         results = tracks_json.get("results", [])
         if not results:
             return []
@@ -56,7 +48,6 @@ class MusicService:
         if not results:
             return []
 
-        # ✅ Nhóm theo artist_id
         artists_map = defaultdict(lambda: {
             "artist_id": None,
             "artist_name": None,

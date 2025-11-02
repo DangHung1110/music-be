@@ -2,6 +2,7 @@ from sqlalchemy import Column, String, Integer, DateTime, Boolean, Text
 from sqlalchemy.sql import func
 from datetime import datetime
 from . import Base
+from sqlalchemy.orm import relationship
 
 class BaseMixin:
     def to_dict(self):
@@ -20,7 +21,7 @@ class User(Base, BaseMixin):
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     username = Column(String(50), unique=True, nullable=False, index=True)
     email = Column(String(100), unique=True, nullable=False, index=True)
-    password = Column(String(255), nullable=True)  # Nullable for OAuth users
+    password = Column(String(255), nullable=True)  
     full_name = Column(String(100))
     bio = Column(Text, nullable=True)
     image_url = Column(String(255), nullable=True)
@@ -36,3 +37,6 @@ class User(Base, BaseMixin):
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    likes = relationship("Like", back_populates="user", lazy="selectin")
+    comments = relationship("Comment", back_populates="user", lazy="selectin")

@@ -30,8 +30,8 @@ async def get_my_playlists(
 @router.post("/create")
 @async_handler
 async def create_playlist(
-     db: Annotated[AsyncSession, Depends(get_db)],
-     current_user: dict = Depends(get_current_user),
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: dict = Depends(get_current_user),
     title: str = Body(...),
     description: str = Body(...),
     source: str = Body(...),

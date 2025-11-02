@@ -86,7 +86,6 @@ class UsersService:
             if await user_repo.get_by_username(update_data["username"]):
                 raise ConflictRequestError("Username already taken")
 
-        # Handle password hashing if provided
         if "password" in update_data and update_data["password"]:
             update_data["password"] = self.auth_service.hash_password(update_data["password"])
 

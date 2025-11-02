@@ -313,3 +313,4 @@ class AuthService:
         await self.redis_service.cache_user_data(user_id, user_dict)
         
         return user_dict
+

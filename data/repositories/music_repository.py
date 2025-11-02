@@ -7,7 +7,6 @@ class MusicRespository:
         self.BASE_URL = JamendoConfig.BASE_URL
 
     async def search_tracks(self, query: str, limit: int = 10):
-        """Tìm bài hát theo tên"""
         url = f"{self.BASE_URL}/tracks"
         params = {
             "client_id": self.JAMENDO_CLIENT_ID,
@@ -20,7 +19,6 @@ class MusicRespository:
             return response.json()
 
     async def search_by_artist(self, artist_name: str, limit: int = 50):
-        """Tìm bài hát theo tên nghệ sĩ"""
         url = f"{self.BASE_URL}/tracks"
         params = {
             "client_id": self.JAMENDO_CLIENT_ID,

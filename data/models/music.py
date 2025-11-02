@@ -27,10 +27,10 @@ class Song(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     title = Column(String(100), nullable=False)
-    duration = Column(Integer, nullable=True)  # seconds
+    duration = Column(Integer, nullable=True) 
     file_url = Column(String(255), nullable=False)
     cover_url = Column(String(255), nullable=True)
-    jamendo_id = Column(String(50), unique=True, nullable=True)  # thêm cột mới
+    jamendo_id = Column(String(50), unique=True, nullable=True)  
     artist_id = Column(Integer, ForeignKey("artists.id"))
     album_id = Column(Integer, ForeignKey("albums.id"))
 
@@ -38,3 +38,4 @@ class Song(Base):
 
     artist = relationship("Artist", back_populates="songs")
     album = relationship("Album", back_populates="songs")
+

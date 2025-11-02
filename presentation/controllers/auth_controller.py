@@ -35,7 +35,6 @@ async def login(request: LoginRequest, response: Response, db: AsyncSession = De
     access_token = result.get("access_token")
     refresh_token = result.get("refresh_token")
 
-    # set refresh token as HttpOnly cookie
     response.set_cookie(
         key="refresh_token",
         value=refresh_token,
@@ -60,7 +59,6 @@ async def refresh_token(response: Response, refresh_token: Optional[str] = Cooki
         raise HTTPException(status_code=401, detail="Refresh token missing")
     new_tokens = await auth_service.refresh_access_token(refresh_token=refresh_token)
 
-    # replace cookie with new refresh token if provided
     if "refresh_token" in new_tokens:
         response.set_cookie(
             key="refresh_token",
@@ -81,7 +79,6 @@ async def logout(
     refresh_token: Optional[str] = Cookie(None),
     authorization: Optional[str] = Header(None)
 ):
-    # pass refresh_token and/or current access token to service for blacklist/invalidation
     await auth_service.logout_user(token=authorization, refresh_token=refresh_token)
     response.delete_cookie("refresh_token", path="/")
     return OK(message="Logged out").send()
@@ -92,7 +89,6 @@ async def logout_all_devices(
     current_user: dict = Depends(get_current_user),
     authorization: str = Header(None)
 ):
-    # Extract token from authorization header
     token = None
     if authorization and authorization.startswith("Bearer "):
         token = authorization.split(" ")[1]
@@ -135,16 +131,10 @@ async def facebook_auth():
 @router.get("/google/callback")
 async def google_callback(code: str = Query(...), db: AsyncSession = Depends(get_db)):
     try:
-        # Exchange code for user info
         oauth_data = await oauth_service.exchange_google_code(code)
-        
-        # Handle login/registration
         result = await oauth_service.handle_oauth_login(db, oauth_data)
-        
-        # Build frontend redirect URL
         redirect_url = oauth_service.build_frontend_redirect_url(result)
         
-        # Redirect to frontend with tokens
         return RedirectResponse(url=redirect_url)
         
     except Exception as e:
@@ -155,16 +145,10 @@ async def google_callback(code: str = Query(...), db: AsyncSession = Depends(get
 @router.get("/facebook/callback")
 async def facebook_callback(code: str = Query(...), db: AsyncSession = Depends(get_db)):
     try:
-        # Exchange code for user info
         oauth_data = await oauth_service.exchange_facebook_code(code)
-        
-        # Handle login/registration
         result = await oauth_service.handle_oauth_login(db, oauth_data)
-        
-        # Build frontend redirect URL
         redirect_url = oauth_service.build_frontend_redirect_url(result)
         
-        # Redirect to frontend with tokens
         return RedirectResponse(url=redirect_url)
         
     except Exception as e:
