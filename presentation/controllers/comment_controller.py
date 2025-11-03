@@ -24,7 +24,7 @@ async def add_comment(
     service: CommentService = Depends(get_comment_service),
 ):
     """Thêm comment cho bài hát"""
-    comment = await service.add_comment(current_user.id, jamendo_song_id, data.content)
+    comment = await service.add_comment(current_user.get("user_id"), jamendo_song_id, data.content)
     return comment.to_dict()
 
 @router.delete("/{comment_id}", status_code=204)
@@ -33,7 +33,7 @@ async def delete_comment(
     current_user=Depends(get_current_user),
     service: CommentService = Depends(get_comment_service),
 ):
-    await service.remove_comment(comment_id, current_user.id)
+    await service.remove_comment(comment_id, current_user.get("user_id"))
 
 @router.get("/songs/{jamendo_song_id}")
 async def get_comments(
@@ -50,5 +50,5 @@ async def update_comment(
     current_user=Depends(get_current_user),
     service: CommentService = Depends(get_comment_service),
 ):
-    comment = await service.update_comment(comment_id, current_user.id, data.content)
+    comment = await service.update_comment(comment_id, current_user.get("user_id"), data.content)
     return comment.to_dict()

@@ -16,7 +16,7 @@ async def like_song(
     service: LikeService = Depends(get_like_service),
 ):
     try:
-        like = await service.like_song(current_user.id, jamendo_song_id)
+        like = await service.like_song(current_user.get("user_id"), jamendo_song_id)
         return {"success": True, "like_id": like.id, "message": "Liked successfully"}
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
@@ -30,7 +30,7 @@ async def unlike_song(
     service: LikeService = Depends(get_like_service),
 ):
     try:
-        await service.unlike_song(current_user.id, jamendo_song_id)
+        await service.unlike_song(current_user.get("user_id"), jamendo_song_id)
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
@@ -41,7 +41,7 @@ async def toggle_like(
     service: LikeService = Depends(get_like_service),
 ):
     try:
-        result = await service.toggle_like(current_user.id, jamendo_song_id)
+        result = await service.toggle_like(current_user.get("user_id"), jamendo_song_id)
         return result
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
@@ -52,7 +52,7 @@ async def is_song_liked(
     current_user=Depends(get_current_user),
     service: LikeService = Depends(get_like_service),
 ):
-    is_liked = await service.is_song_liked(current_user.id, jamendo_song_id)
+    is_liked = await service.is_song_liked(current_user.get("user_id"), jamendo_song_id)
     return {"is_liked": is_liked}
 
 @router.get("/me/song-ids")
@@ -60,7 +60,7 @@ async def get_my_liked_song_ids(
     current_user=Depends(get_current_user),
     service: LikeService = Depends(get_like_service),
 ):
-    song_ids = await service.get_user_liked_song_ids(current_user.id)
+    song_ids = await service.get_user_liked_song_ids(current_user.get("user_id"))
     return {"song_ids": song_ids, "total": len(song_ids)}
 
 @router.get("/songs/{jamendo_song_id}/count")
