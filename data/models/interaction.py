@@ -8,7 +8,7 @@ class Like(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    jamendo_song_id = Column(String(50), nullable=False, index=True)  # ✅ Đổi thành String
+    jamendo_song_id = Column(String(50), nullable=False, index=True)  # Đổi thành String
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     user = relationship("User", back_populates="likes", lazy="joined")
@@ -31,7 +31,7 @@ class Comment(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    jamendo_song_id = Column(String(50), nullable=False, index=True)  # ✅ Đổi thành String
+    jamendo_song_id = Column(String(50), nullable=False, index=True)  # Đổi thành String
     content = Column(Text, nullable=False)
     user = relationship("User", back_populates="comments", lazy="joined")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
